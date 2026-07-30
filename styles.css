@@ -1,0 +1,666 @@
+/* ==========================================================================
+   Pull Cord Lamp — styles.css
+   A minimalist room with an interactive hanging lamp.
+   ========================================================================== */
+
+/* --- Reset & base -------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Room palette */
+  --wall-light: #e8e4df;
+  --wall-mid: #d4cfc8;
+  --wall-dark: #b8b2a8;
+
+  /* Lamp colors */
+  --bulb-off: #8a8580;
+  --bulb-on: #ffd966;
+  --bulb-glow: rgba(255, 217, 102, 0.65);
+  --shade-color: #f5f0ea;
+  --shade-shadow: #c9c0b5;
+  --cord-color: #d4cbb8;
+  --handle-color: #b8a990;
+
+  /* Timing */
+  --transition-light: 400ms ease;
+  --transition-fast: 200ms ease;
+
+  /* Brightness multiplier (updated by JS slider) */
+  --brightness: 0.85;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #3a3632;
+  background: linear-gradient(
+    180deg,
+    var(--wall-light) 0%,
+    var(--wall-mid) 55%,
+    var(--wall-dark) 100%
+  );
+  transition: background var(--transition-light);
+}
+
+/* Darker room when lamp is off (nighttime mode) */
+body.lamp-off {
+  background: linear-gradient(
+    180deg,
+    #3a3835 0%,
+    #2a2826 55%,
+    #1a1918 100%
+  );
+}
+
+body.lamp-on {
+  background: linear-gradient(
+    180deg,
+    var(--wall-light) 0%,
+    var(--wall-mid) 55%,
+    var(--wall-dark) 100%
+  );
+}
+
+/* --- Room scene ------------------------------------------------------------ */
+
+.room {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: clamp(2rem, 8vh, 5rem);
+}
+
+/* Warm ambient glow spread across the wall when lamp is on */
+.room-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 18%,
+    rgba(255, 217, 102, calc(0.35 * var(--brightness))) 0%,
+    rgba(255, 200, 80, calc(0.12 * var(--brightness))) 40%,
+    transparent 70%
+  );
+  transition: opacity var(--transition-light);
+}
+
+body.lamp-on .room-glow {
+  opacity: 1;
+}
+
+/* Nighttime vignette when lamp is off */
+.night-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 40%,
+    transparent 20%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  transition: opacity var(--transition-light);
+}
+
+body.lamp-off .night-overlay {
+  opacity: 1;
+}
+
+/* --- Lamp assembly --------------------------------------------------------- */
+
+.lamp-assembly {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Shadow beneath lamp — changes with light state (stretch goal) */
+.lamp-shadow {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 120px;
+  height: 24px;
+  margin-top: 8px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.25) 0%, transparent 70%);
+  filter: blur(4px);
+  transition: opacity var(--transition-light), transform var(--transition-light);
+  pointer-events: none;
+}
+
+body.lamp-off .lamp-shadow {
+  opacity: 0.15;
+  transform: translateX(-50%) scale(0.7);
+}
+
+body.lamp-on .lamp-shadow {
+  opacity: 0.45;
+  transform: translateX(-50%) scale(1.1);
+}
+
+/* Swing container — receives swing animation after pull */
+.lamp-swing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: top center;
+}
+
+.lamp-swing.swinging {
+  animation: lamp-swing 1.2s ease-in-out;
+}
+
+@keyframes lamp-swing {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(4deg); }
+  35%  { transform: rotate(-3deg); }
+  55%  { transform: rotate(2deg); }
+  75%  { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* --- Ceiling mount --------------------------------------------------------- */
+
+.ceiling-mount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mount-plate {
+  width: 36px;
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #aaa 0%, #888 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.power-cord {
+  width: 3px;
+  height: 28px;
+  background: #555;
+  border-radius: 2px;
+}
+
+/* --- Lampshade ------------------------------------------------------------- */
+
+.lamp-shade {
+  position: relative;
+  width: 140px;
+  height: 90px;
+  margin-top: -2px;
+  border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%;
+  background: linear-gradient(
+    180deg,
+    var(--shade-color) 0%,
+    var(--shade-shadow) 100%
+  );
+  box-shadow:
+    inset 0 -8px 20px rgba(0, 0, 0, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.12);
+  transition: background var(--transition-light), box-shadow var(--transition-light);
+}
+
+.shade-inner {
+  position: absolute;
+  inset: 8px 12px 20px;
+  border-radius: 50% 50% 40% 40% / 25% 25% 75% 75%;
+  background: linear-gradient(180deg, #fff8f0 0%, #f0e8dc 100%);
+  opacity: 0.9;
+}
+
+.shade-rim {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ddd 0%, #bbb 100%);
+}
+
+/* --- Light bulb ------------------------------------------------------------ */
+
+.lamp-bulb {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 40px;
+  border-radius: 50% 50% 45% 45%;
+  background: var(--bulb-off);
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.15);
+  transition:
+    background var(--transition-light),
+    box-shadow var(--transition-light);
+}
+
+.bulb-filament {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 14px;
+  border: 2px solid rgba(80, 70, 60, 0.5);
+  border-radius: 2px;
+  opacity: 0.4;
+  transition: opacity var(--transition-light), border-color var(--transition-light);
+}
+
+/* Bloom / glow around bulb */
+.bulb-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    var(--bulb-glow) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  filter: blur(6px);
+  transition: opacity var(--transition-light);
+  pointer-events: none;
+}
+
+body.lamp-on .lamp-bulb {
+  background: var(--bulb-on);
+  box-shadow:
+    inset 0 -4px 8px rgba(255, 200, 50, 0.3),
+    0 0 calc(20px * var(--brightness)) rgba(255, 217, 102, calc(0.6 * var(--brightness))),
+    0 0 calc(40px * var(--brightness)) rgba(255, 217, 102, calc(0.3 * var(--brightness)));
+}
+
+body.lamp-on .bulb-filament {
+  opacity: 1;
+  border-color: rgba(255, 200, 80, 0.8);
+  box-shadow: 0 0 6px rgba(255, 217, 102, 0.8);
+}
+
+body.lamp-on .bulb-glow {
+  opacity: calc(0.9 * var(--brightness));
+}
+
+/* First-time flicker when turning on */
+.lamp-bulb.flickering {
+  animation: bulb-flicker 600ms ease-in-out;
+}
+
+@keyframes bulb-flicker {
+  0%   { opacity: 0.2; }
+  10%  { opacity: 1; }
+  20%  { opacity: 0.4; }
+  35%  { opacity: 0.9; }
+  50%  { opacity: 0.6; }
+  65%  { opacity: 1; }
+  80%  { opacity: 0.85; }
+  100% { opacity: 1; }
+}
+
+/* --- Pull cord ------------------------------------------------------------- */
+
+.pull-cord-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: -6px;
+}
+
+.pull-cord {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.pull-cord:focus-visible {
+  outline: 2px solid #6b9fd4;
+  outline-offset: 6px;
+  border-radius: 4px;
+}
+
+.pull-cord:active {
+  cursor: grabbing;
+}
+
+.cord-line {
+  width: 2px;
+  height: 90px;
+  background: linear-gradient(180deg, var(--cord-color) 0%, #c4baa8 100%);
+  border-radius: 1px;
+  transform-origin: top center;
+  transition: height 150ms ease-out;
+}
+
+/* Cord stretch during drag */
+.cord-line.stretching {
+  transition: none;
+}
+
+/* Cord bounce after pull */
+.cord-line.bouncing {
+  animation: cord-bounce 500ms ease-out;
+}
+
+@keyframes cord-bounce {
+  0%   { transform: scaleY(1.15); }
+  30%  { transform: scaleY(0.92); }
+  55%  { transform: scaleY(1.04); }
+  75%  { transform: scaleY(0.98); }
+  100% { transform: scaleY(1); }
+}
+
+.cord-handle {
+  width: 14px;
+  height: 22px;
+  margin-top: -2px;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(180deg, var(--handle-color) 0%, #9a8b72 100%);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transition: transform 150ms ease-out;
+}
+
+/* Pull animation — handle drops then snaps back */
+.cord-handle.pulling {
+  animation: handle-pull 350ms ease-out;
+}
+
+@keyframes handle-pull {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(18px); }
+  70%  { transform: translateY(-4px); }
+  100% { transform: translateY(0); }
+}
+
+/* --- Lamp style variants (stretch goal) ---------------------------------- */
+
+/* Classic — default warm drum shade (styles above) */
+body.style-classic .lamp-shade {
+  border-radius: 50% 50% 45% 45% / 30% 30% 70% 70%;
+}
+
+/* Modern — sleek cone shape */
+body.style-modern .lamp-shade {
+  width: 120px;
+  height: 100px;
+  border-radius: 8px 8px 50% 50% / 8px 8px 60% 60%;
+  background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 100%);
+  --shade-color: #ffffff;
+  --shade-shadow: #d0d0d0;
+}
+
+body.style-modern .shade-rim {
+  width: 110px;
+  background: linear-gradient(180deg, #ccc 0%, #aaa 100%);
+}
+
+body.style-modern .lamp-bulb {
+  width: 28px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+/* Industrial — metal cage look */
+body.style-industrial .lamp-shade {
+  width: 130px;
+  height: 95px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #4a4a4a 0%, #2a2a2a 100%);
+  --shade-color: #4a4a4a;
+  --shade-shadow: #2a2a2a;
+  box-shadow:
+    inset 0 0 0 3px #666,
+    0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.style-industrial .shade-inner {
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  inset: 6px;
+  border-radius: 4px;
+}
+
+body.style-industrial .shade-rim {
+  background: linear-gradient(180deg, #555 0%, #333 100%);
+}
+
+body.style-industrial .cord-line,
+body.style-industrial .cord-handle {
+  --cord-color: #888;
+  --handle-color: #666;
+}
+
+/* --- Controls footer ------------------------------------------------------- */
+
+.controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 1rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.08));
+}
+
+body.lamp-off .controls {
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.35));
+}
+
+.status-label {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #3a3632;
+  transition: color var(--transition-light);
+}
+
+body.lamp-off .status-label {
+  color: #c8c4be;
+}
+
+body.lamp-on .status-label {
+  color: #5a554e;
+}
+
+/* Brightness slider */
+.brightness-control {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: inherit;
+  animation: fade-in 300ms ease;
+}
+
+.brightness-control[hidden] {
+  display: none;
+}
+
+.brightness-control label {
+  font-weight: 500;
+}
+
+.brightness-control input[type="range"] {
+  width: 140px;
+  accent-color: #e6b84a;
+  cursor: pointer;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Control row: style picker + sound toggle */
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem 1.5rem;
+}
+
+.style-picker {
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.style-picker legend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0;
+  margin-right: 0.25rem;
+}
+
+body.lamp-off .style-picker legend {
+  color: #aaa;
+}
+
+.style-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+body.lamp-off .style-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ccc;
+}
+
+.style-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+body.lamp-off .style-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.style-btn.active {
+  background: #e6b84a;
+  border-color: #d4a030;
+  color: #3a2e10;
+}
+
+body.lamp-off .style-btn.active {
+  background: #b8942e;
+  border-color: #a08028;
+  color: #fff;
+}
+
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+  color: inherit;
+  opacity: 0.8;
+}
+
+body.lamp-off .sound-toggle {
+  color: #aaa;
+}
+
+.sound-toggle input {
+  accent-color: #e6b84a;
+  cursor: pointer;
+}
+
+/* --- Reduced motion -------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .lamp-swing.swinging {
+    animation: none;
+  }
+
+  .cord-line.bouncing,
+  .cord-handle.pulling {
+    animation: none;
+  }
+
+  .lamp-bulb.flickering {
+    animation: none;
+  }
+}
+
+/* --- Responsive ------------------------------------------------------------ */
+
+@media (max-width: 480px) {
+  .lamp-shade {
+    width: 110px;
+    height: 72px;
+  }
+
+  .cord-line {
+    height: 70px;
+  }
+
+  .control-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .style-picker {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

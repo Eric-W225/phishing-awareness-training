@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pull Cord Lamp</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="lamp-off">
+  <!-- Main room scene -->
+  <main class="room" aria-label="Interactive lamp room">
+    <!-- Ambient light overlay — intensity driven by lamp state -->
+    <div class="room-glow" id="roomGlow" aria-hidden="true"></div>
+    <!-- Nighttime vignette when lamp is off -->
+    <div class="night-overlay" id="nightOverlay" aria-hidden="true"></div>
+
+    <!-- Lamp assembly: shadow, swing group, cord -->
+    <div class="lamp-assembly" id="lampAssembly">
+      <div class="lamp-shadow" id="lampShadow" aria-hidden="true"></div>
+
+      <div class="lamp-swing" id="lampSwing">
+        <!-- Ceiling mount & power cord -->
+        <div class="ceiling-mount" aria-hidden="true">
+          <div class="mount-plate"></div>
+          <div class="power-cord"></div>
+        </div>
+
+        <!-- Lampshade housing -->
+        <div class="lamp-shade" id="lampShade">
+          <div class="shade-inner" aria-hidden="true"></div>
+          <div class="shade-rim" aria-hidden="true"></div>
+          <!-- Light bulb -->
+          <div class="lamp-bulb" id="lampBulb" aria-hidden="true">
+            <div class="bulb-filament"></div>
+            <div class="bulb-glow" id="bulbGlow"></div>
+          </div>
+        </div>
+
+        <!-- Pull cord — draggable & keyboard-operable -->
+        <div class="pull-cord-wrap">
+          <div
+            class="pull-cord"
+            id="pullCord"
+            tabindex="0"
+            role="button"
+            aria-pressed="false"
+            aria-label="Pull cord to toggle lamp. Drag down or press Space or Enter."
+          >
+            <div class="cord-line" id="cordLine"></div>
+            <div class="cord-handle" id="cordHandle"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- UI controls -->
+  <footer class="controls">
+    <p class="status-label" id="statusLabel" aria-live="polite">Lamp is OFF</p>
+
+    <!-- Brightness slider — visible only when lamp is on -->
+    <div class="brightness-control" id="brightnessControl" hidden>
+      <label for="brightnessSlider">Brightness</label>
+      <input
+        type="range"
+        id="brightnessSlider"
+        min="20"
+        max="100"
+        value="85"
+        aria-valuemin="20"
+        aria-valuemax="100"
+        aria-valuenow="85"
+      >
+    </div>
+
+    <div class="control-row">
+      <!-- Lamp style picker -->
+      <fieldset class="style-picker" aria-label="Lamp style">
+        <legend>Lamp style</legend>
+        <button type="button" class="style-btn active" data-style="classic" aria-pressed="true">Classic</button>
+        <button type="button" class="style-btn" data-style="modern" aria-pressed="false">Modern</button>
+        <button type="button" class="style-btn" data-style="industrial" aria-pressed="false">Industrial</button>
+      </fieldset>
+
+      <!-- Sound toggle -->
+      <label class="sound-toggle">
+        <input type="checkbox" id="soundToggle" checked>
+        <span>Click sound</span>
+      </label>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
