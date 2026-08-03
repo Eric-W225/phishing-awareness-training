@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fake IRS Scam — Training Simulation</title>
+  <link rel="stylesheet" href="phishing-simulation.css">
+</head>
+<body>
+  <!--
+    PHISHING SIMULATION — EDUCATIONAL USE ONLY
+    This page simulates a fake IRS phishing email inside a mock email client.
+    Modify SCENARIO in phishing-simulation.js to change the scam theme.
+  -->
+  <div class="training-app" id="trainingApp">
+
+    <!-- Mock email client chrome -->
+    <header class="email-client-header">
+      <div class="client-brand">
+        <span class="client-logo" aria-hidden="true">✉</span>
+        <span class="client-name">SecureMail Training</span>
+      </div>
+      <div class="client-toolbar">
+        <span class="training-badge">Simulation Mode</span>
+        <button type="button" class="send-toggle-btn" id="sendToggleBtn">
+          Send to Email
+        </button>
+      </div>
+    </header>
+
+    <!-- Trainer: send this simulation to a real inbox (authorized training only) -->
+    <section class="send-panel" id="sendPanel" hidden>
+      <div class="send-panel-inner">
+        <h2>Send Training Simulation by Email</h2>
+        <p class="send-panel-lead">
+          Sends the simulated phishing message so the recipient can open it in their
+          real inbox. Use only with people who have agreed to this training.
+        </p>
+
+        <form class="send-form" id="sendTrainingForm">
+          <div class="form-row">
+            <label for="recipientEmail">Recipient email address</label>
+            <input
+              type="email"
+              id="recipientEmail"
+              name="recipientEmail"
+              required
+              placeholder="trainee@example.com"
+              autocomplete="email"
+            >
+          </div>
+
+          <div class="form-row">
+            <label for="simulationLink">Training page link (used in the email buttons)</label>
+            <input type="url" id="simulationLink" name="simulationLink" required>
+            <span class="field-hint">
+              Recipients must be able to open this URL. Localhost only works on this computer.
+            </span>
+          </div>
+
+          <label class="consent-check">
+            <input type="checkbox" id="consentCheck" required>
+            <span>
+              I confirm the recipient consented to receive this phishing-awareness
+              training simulation, and I will not use this for any real scam.
+            </span>
+          </label>
+
+          <details class="emailjs-setup" id="emailjsSetup">
+            <summary>Optional: auto-send with EmailJS (no mail app needed)</summary>
+            <p class="field-hint">
+              Create a free account at
+              <a href="https://www.emailjs.com/" target="_blank" rel="noopener noreferrer">emailjs.com</a>,
+              add an email service, create a template with variables
+              <code>to_email</code>, <code>subject</code>, and <code>message_html</code>,
+              then paste your IDs below. Saved only in this browser.
+            </p>
+            <div class="form-row">
+              <label for="emailjsPublicKey">Public Key</label>
+              <input type="text" id="emailjsPublicKey" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="form-row form-row-split">
+              <div>
+                <label for="emailjsServiceId">Service ID</label>
+                <input type="text" id="emailjsServiceId" autocomplete="off" spellcheck="false">
+              </div>
+              <div>
+                <label for="emailjsTemplateId">Template ID</label>
+                <input type="text" id="emailjsTemplateId" autocomplete="off" spellcheck="false">
+              </div>
+            </div>
+          </details>
+
+          <div class="send-actions">
+            <button type="submit" class="btn-primary" id="sendEmailBtn">
+              Send Simulation Email
+            </button>
+            <button type="button" class="btn-secondary" id="downloadEmlBtn">
+              Download .eml instead
+            </button>
+          </div>
+
+          <p class="send-status" id="sendStatus" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <div class="email-client-layout">
+      <!-- Sidebar: inbox list -->
+      <aside class="email-sidebar" aria-label="Inbox">
+        <div class="sidebar-section">
+          <h2 class="sidebar-title">Inbox</h2>
+          <ul class="inbox-list" id="inboxList" role="list">
+            <!-- Populated by JS from SCENARIO -->
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main email reading pane -->
+      <main class="email-pane" id="emailPane" aria-label="Email message">
+        <div class="email-toolbar">
+          <button type="button" class="toolbar-btn" disabled aria-hidden="true">Reply</button>
+          <button type="button" class="toolbar-btn" disabled aria-hidden="true">Forward</button>
+          <button type="button" class="toolbar-btn" disabled aria-hidden="true">Delete</button>
+        </div>
+
+        <article class="email-message" id="emailMessage">
+          <!-- Email header -->
+          <header class="email-header">
+            <h1 class="email-subject" id="emailSubject"></h1>
+            <div class="email-meta">
+              <div class="email-from">
+                <span class="meta-label">From:</span>
+                <span class="sender-display" id="senderDisplay"></span>
+                <span class="sender-email suspicious" id="senderEmail"></span>
+              </div>
+              <div class="email-to">
+                <span class="meta-label">To:</span>
+                <span id="recipientDisplay">you@example.com</span>
+              </div>
+              <div class="email-date">
+                <span class="meta-label">Date:</span>
+                <span id="emailDate"></span>
+              </div>
+            </div>
+          </header>
+
+          <!-- Phishing email body — content driven by SCENARIO -->
+          <div class="email-body" id="emailBody"></div>
+        </article>
+      </main>
+    </div>
+  </div>
+
+  <!-- Fake refund verification page (shown after clicking the CTA) -->
+  <div
+    class="verification-overlay"
+    id="verificationOverlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="verificationTitle"
+    hidden
+  >
+    <div class="verification-page">
+      <header class="verification-header">
+        <div class="verification-logo">IRS Refund Portal</div>
+        <div class="verification-url">https://irs-refunds-example.com/verify-account</div>
+      </header>
+
+      <main class="verification-main">
+        <h1 id="verificationTitle">Tax Refund Verification</h1>
+        <p class="verification-intro">
+          Please confirm your identity below to release your pending refund of
+          <strong>$847.00</strong>. All fields are required.
+        </p>
+
+        <form class="verification-form" id="verificationForm" novalidate>
+          <div class="form-row">
+            <label for="fullName">Full Legal Name</label>
+            <input type="text" id="fullName" name="fullName" autocomplete="name" placeholder="As shown on your tax return">
+          </div>
+
+          <div class="form-row form-row-split">
+            <div>
+              <label for="dateOfBirth">Date of Birth</label>
+              <input type="text" id="dateOfBirth" name="dateOfBirth" placeholder="MM/DD/YYYY">
+            </div>
+            <div>
+              <label for="ssnLast4">SSN (last 4 digits)</label>
+              <input type="text" id="ssnLast4" name="ssnLast4" inputmode="numeric" maxlength="4" placeholder="XXXX">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <label for="mailingAddress">Current Mailing Address</label>
+            <input type="text" id="mailingAddress" name="mailingAddress" autocomplete="street-address" placeholder="Street, city, state, ZIP">
+          </div>
+
+          <div class="form-row">
+            <label for="bankAccount">Bank Account or Debit Card Number</label>
+            <input type="text" id="bankAccount" name="bankAccount" inputmode="numeric" placeholder="For direct deposit of your refund">
+          </div>
+
+          <p class="verification-disclaimer">
+            By submitting this form, you authorize the IRS Refund Processing Unit to verify
+            your identity and deposit funds to the account provided.
+          </p>
+
+          <button type="submit" class="verification-submit">Submit Verification</button>
+        </form>
+      </main>
+
+      <footer class="verification-footer">
+        © 2026 IRS Refund Portal — irs-refunds-example.com
+      </footer>
+    </div>
+  </div>
+
+  <!-- Full-screen educational overlay (shown after user submits the fake form) -->
+  <div
+    class="education-overlay"
+    id="educationOverlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="educationTitle"
+    hidden
+  >
+    <div class="education-panel">
+      <div class="education-header">
+        <span class="education-icon" aria-hidden="true">🛡️</span>
+        <h2 id="educationTitle">This Was a Simulated Phishing Email</h2>
+        <p class="education-lead">
+          You clicked the link and entered personal information on a fake site. In a real
+          scenario, that data would have gone straight to scammers. Here's what to look for
+          next time.
+        </p>
+      </div>
+
+      <div class="education-content">
+        <section class="education-section">
+          <h3>Warning Signs in This Email</h3>
+          <ul class="warning-signs-list" id="warningSignsList"></ul>
+        </section>
+
+        <section class="education-section">
+          <h3>Why Scammers Use Urgency and Fear</h3>
+          <p>
+            Criminals know that when people feel rushed or afraid, they stop thinking
+            critically. Phrases like "immediate action required" or threats of account
+            suspension are designed to bypass your natural caution. By creating a false
+            deadline, scammers hope you'll click before verifying anything.
+          </p>
+        </section>
+
+        <section class="education-section">
+          <h3>How to Verify Real IRS Communications</h3>
+          <ul class="best-practices-list">
+            <li>
+              The IRS <strong>does not</strong> initiate contact about refunds or
+              account issues by email, text, or social media.
+            </li>
+            <li>
+              Never click links in unsolicited messages. Instead, go directly to
+              <strong>irs.gov</strong> by typing the address yourself.
+            </li>
+            <li>
+              Check the sender's email address carefully — official IRS emails end in
+              <strong>@irs.gov</strong>, not look-alike domains.
+            </li>
+            <li>
+              When in doubt, call the IRS using the number listed on
+              <strong>irs.gov/contact</strong> — not a number from the email.
+            </li>
+            <li>
+              Report suspicious IRS-related emails to
+              <strong>phishing@irs.gov</strong> (the real reporting address).
+            </li>
+          </ul>
+        </section>
+      </div>
+
+      <footer class="education-footer">
+        <button type="button" class="btn-primary" id="tryAgainBtn">
+          Try Another Simulation
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="phishing-simulation.js"></script>
+</body>
+</html>
